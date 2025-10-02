@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
-import pdf from 'pdf-parse';
 import mammoth from 'mammoth'
 
 export async function POST(request: NextRequest) {
@@ -16,20 +15,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file type
+    // Chỉ cho phép file Word
     const allowedTypes = [
-      'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Chỉ hỗ trợ file PDF và Word' },
+        { error: 'Chỉ hỗ trợ file Word' },
         { status: 400 }
       )
     }
 
-    // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { error: 'File quá lớn. Kích thước tối đa là 10MB' },
@@ -40,7 +37,6 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Lưu file vào thư mục /tmp của serverless environment
     const uploadsDir = join('/tmp', 'uploads')
     await mkdir(uploadsDir, { recursive: true })
 
@@ -48,37 +44,22 @@ export async function POST(request: NextRequest) {
     const filePath = join(uploadsDir, fileName)
     await writeFile(filePath, buffer)
 
-    // Extract text content
+    // Dùng mammoth để trích xuất text từ file Word
     let textContent = ''
     let pages = 0
 
-    if (file.type === 'application/pdf') {
-      try {
-        const pdfData = await pdf(buffer)
-        textContent = pdfData.text
-        pages = pdfData.numpages
-      } catch (error) {
-        console.error('PDF parsing error:', error)
-        return NextResponse.json(
-          { error: 'Không thể đọc file PDF' },
-          { status: 400 }
-        )
-      }
-    } else if (file.type.includes('word')) {
-      try {
-        const result = await mammoth.extractRawText({ buffer })
-        textContent = result.value
-        pages = Math.ceil(textContent.length / 2000) // Estimate pages
-      } catch (error) {
-        console.error('Word parsing error:', error)
-        return NextResponse.json(
-          { error: 'Không thể đọc file Word' },
-          { status: 400 }
-        )
-      }
+    try {
+      const result = await mammoth.extractRawText({ buffer })
+      textContent = result.value
+      pages = Math.ceil(textContent.length / 2000) // ước lượng số trang
+    } catch (error) {
+      console.error('Word parsing error:', error)
+      return NextResponse.json(
+        { error: 'Không thể đọc file Word' },
+        { status: 400 }
+      )
     }
 
-    // Save extracted text to a separate file
     const textFileName = `${fileName}.txt`
     const textFilePath = join(uploadsDir, textFileName)
     await writeFile(textFilePath, textContent, 'utf-8')
