@@ -29,6 +29,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@types/pdf-parse": "^1.1.5",
     "eslint": "^8.56.0",
     "eslint-config-next": "13.5.6"
   }
