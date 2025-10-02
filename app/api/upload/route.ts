@@ -17,7 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { error: 'Chỉ hỗ trợ file PDF và Word' },
@@ -36,15 +40,10 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'uploads')
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
-    }
+    // Lưu file vào thư mục /tmp của serverless environment
+    const uploadsDir = join('/tmp', 'uploads')
+    await mkdir(uploadsDir, { recursive: true })
 
-    // Save file
     const fileName = `${Date.now()}-${file.name}`
     const filePath = join(uploadsDir, fileName)
     await writeFile(filePath, buffer)
@@ -79,7 +78,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Save extracted text to a separate file for AI to use
+    // Save extracted text to a separate file
     const textFileName = `${fileName}.txt`
     const textFilePath = join(uploadsDir, textFileName)
     await writeFile(textFilePath, textContent, 'utf-8')
