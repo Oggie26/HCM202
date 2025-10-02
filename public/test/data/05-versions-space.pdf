@@ -1,0 +1,2 @@
+import path from 'path';
+const filePath = path.join(process.cwd(), 'public/test/data/05-versions-space.pdf');
