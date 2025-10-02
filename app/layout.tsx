@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
-
+const inter = {
+  className: 'font-sans',
+}
 export const metadata: Metadata = {
   title: 'Chat AI - Tư tưởng Hồ Chí Minh | Hỗ trợ học tập thông minh',
   description: 'Ứng dụng chat AI hiện đại hỗ trợ học tập môn Tư tưởng Hồ Chí Minh. Sinh viên có thể chat với AI và gửi câu hỏi trực tiếp cho giáo viên.',
